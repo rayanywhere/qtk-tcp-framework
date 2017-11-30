@@ -25,5 +25,8 @@
   "bugs": {
     "url": "https://github.com/rayanywhere/qtk-tcp-framework/issues"
   },
-  "homepage": "https://github.com/rayanywhere/qtk-tcp-framework#readme"
+  "homepage": "https://github.com/rayanywhere/qtk-tcp-framework#readme",
+  "dependencies": {
+    "mocha": "^4.0.1"
+  }
 }
