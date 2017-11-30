@@ -1,0 +1,29 @@
+{
+  "name": "@qtk/tcp-framework",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "example": "examples",
+    "test": "test"
+  },
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rayanywhere/qtk-tcp-framework.git"
+  },
+  "keywords": [
+    "tcp",
+    "framework",
+    "server",
+    "client"
+  ],
+  "author": "sophia",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/rayanywhere/qtk-tcp-framework/issues"
+  },
+  "homepage": "https://github.com/rayanywhere/qtk-tcp-framework#readme"
+}
