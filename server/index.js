@@ -1,30 +1,21 @@
 const Message = require('../message');
 const assert = require('assert');
+const EventEmitter = require('events').EventEmitter;
 
-/*============Functions that mean to be overwritten===========*/
+/*============events & params===========*/
 /*
-    onStarted() {
-    }
-
-    onStopped() {
-    }
-
-    onConnected(socket) {
-    }
-
-    onClosed(socket) {
-    }
-
-    onError(socket, err) {
-    }
-    
-    onData(socket, {uuid, buffer}) {
-    }
+    started => ()
+    stopped => ()
+	connected => (socket)
+	closed => (socket)
+	error => (socket, err)
+	data => (socket, {uuid, buffer})
 }
 */
 
-module.exports = class {
-	constructor(options) {		
+module.exports = class Server extends EventEmitter {
+	constructor(options) {
+		super();
 		assert(Number.isInteger(options.port), 'options.port is not correctly configured');
 		if (options.host === undefined) {
 			options.host = '0.0.0.0';
@@ -57,9 +48,7 @@ module.exports = class {
 			}, this._options.duration * 1000);
 		}
 
-		if (typeof this.onStarted === 'function') {
-			this.onStarted();
-		}
+		this.emit('started');
 	}
 
 	stop() {
@@ -72,9 +61,7 @@ module.exports = class {
 			clearInterval(this._checkupTimer);
 			this._checkupTimer = undefined;
 		}
-		if (typeof this.onStopped === 'function') {
-			this.onStopped();
-		}
+		this.emit('stopped');
 		process.exit(0);
 	}
 
@@ -96,20 +83,14 @@ module.exports = class {
 			this._process(socket);
 		});
 		socket.on('error', error => {
-			if (typeof this.onError === 'function') {
-				this.onError(socket, error);
-			}
+			this.emit('error', socket, error);
 		});
 		socket.on('close', _ => {
 			this._socketMap.delete(socket);
-			if (typeof this.onClosed === 'function') {
-				this.onClosed(socket);
-			}
+			this.emit('closed', socket, error);
 		});
 		this._socketMap.set(socket, this._now);
-		if (typeof this.onConnected === 'function') {
-			this.onConnected(socket);
-		}
+		this.emit('connected', socket);
 	}
 
 	_process(socket) {
@@ -123,12 +104,7 @@ module.exports = class {
 				socket.buffer = socket.buffer.slice(consumed);
 
 				if (incomingMessage.sign === Message.SIGN_DATA) {
-					if (typeof this.onData === 'function') {
-						this.onData(socket, {
-							uuid: incomingMessage.uuid,
-							buffer: incomingMessage.payload							
-                        });
-					}
+					this.emit('data', socket, {uuid: incomingMessage.uuid, buffer: incomingMessage.payload});
 				}
 			}
 		}

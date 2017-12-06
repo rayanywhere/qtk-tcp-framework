@@ -12,13 +12,13 @@ describe("#tcp-framework-instant", function() {
     });
     it('[using persistent mode] should return [echo]', function (done) {
         const client = new PersistentClient({port});
-        client.onData = ({uuid, buffer}) => {
+        client.on('data', ({uuid, buffer}) => {
             if (buffer.toString('utf8') !== 'echo') {
                 done(new Error('response mismatch'));
                 return;
             }
             done();
-        };
+        });
         client.send({uuid:uuid().replace(/-/g, ''), buffer:Buffer.from('echo')});        
     });
 });

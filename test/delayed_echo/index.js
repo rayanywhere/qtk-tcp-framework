@@ -20,9 +20,9 @@ describe("#tcp-framework-instant", function() {
         assert(responsePayload.toString('utf8') === 'delayed_echo');
     });
     it('[using persistent mode] should return without error after 3 sec', function (done) {
+        const timeStart = new Date();      
         const client = new PersistentClient({port});
-        const timeStart = new Date();
-        client.onData = ({uuid, buffer}) => {
+        client.on('data', ({uuid, buffer}) => {
             if (buffer.toString('utf8') !== 'delayed_echo') {
                 done(new Error('response mismatch'));
                 return;
@@ -34,7 +34,7 @@ describe("#tcp-framework-instant", function() {
                 return;
             }
             done();
-        };
+        });
         client.send({uuid:uuid().replace(/-/g, ''), buffer:Buffer.from('delayed_echo')});        
     });
 });

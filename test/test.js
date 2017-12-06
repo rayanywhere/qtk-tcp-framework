@@ -1,10 +1,26 @@
-const Server = require('../examples/server');
+const Server = require('../server');
 const fs = require('fs');
 const path = require('path');
 global.assert = require('assert');
 
+const server = new Server({port:8212});
+server.on('data', function (socket, {uuid, buffer}) {
+    switch(buffer.toString('utf8')) {
+        case "echo":
+            this.send(socket, {uuid, buffer});
+            break;
+        case "delayed_echo":
+            setTimeout(() => {
+                this.send(socket, {uuid, buffer});
+            }, 3000);
+            break;
+        default:
+            break;
+    }
+});
+
 before('start server', async () => {
-    (new Server()).start();
+    server.start();
 });
 
 let cases = fs.readdirSync(__dirname).filter(file => fs.lstatSync(path.join(__dirname, file)).isDirectory());

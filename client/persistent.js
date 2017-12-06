@@ -1,3 +1,4 @@
+const EventEmitter = require('events').EventEmitter;
 const net = require('net');
 const Message = require('../message');
 const assert = require('assert');
@@ -6,20 +7,18 @@ const STATUS_DISCONNECTED = 0;
 const STATUS_CONNECTING = 1;
 const STATUS_CONNECTED = 2;
 
-/*============Functions that mean to be overwritten===========*/
+/*============events & params===========*/
 /*
-    onConnected() {}
-
-	onClosed() {}
-	
-	onData({uuid, buffer}) {}
-
-    onError(err) {}
+    connected => ()
+    closed => ()
+	data => ({uuid, buffer})
+	error => (err)
 }
 */
 
-module.exports = class {
+module.exports = class Client extends EventEmitter {
 	constructor(options) {
+		super();
 		assert(Number.isInteger(options.port), 'options.port is not correctly configured');
         options.host = options.hasOwnProperty('host') ? options.host : options.host = 'localhost';
 		this._options = options;
@@ -49,9 +48,7 @@ module.exports = class {
 	_connect() {
 		this._status = STATUS_CONNECTING;
 		this._socket = net.createConnection(this._options.port, this._options.host, () => {
-            if (typeof this.onConnected === 'function') {
-				this.onConnected();
-			}
+			this.emit('connected');
 			this._status = STATUS_CONNECTED;
 			for (let outgoingMessage of this._queuedMessages) {
                 this._socket.write(outgoingMessage.toBuffer());
@@ -63,9 +60,7 @@ module.exports = class {
 			this._process();
 		});
 		this._socket.on('error', (err) => {
-            if (typeof this.onError === 'function') {
-				this.onError(err);
-			}
+			this.emit('error', err);
 		});
 		this._socket.on('close', (hasError) => {
             this._close(hasError);
@@ -80,9 +75,7 @@ module.exports = class {
 			this._socket.end();
 		}
 		this._status = STATUS_DISCONNECTED;
-		if (typeof this.onClosed === 'function') {
-			this.onClosed();
-		}
+		this.emit('closed');
 
 		setTimeout(() => {
 			if (this._status !== STATUS_DISCONNECTED) {
@@ -102,9 +95,7 @@ module.exports = class {
 				this._buffer = this._buffer.slice(consumed);
 
 				if (incomingMessage.sign === Message.SIGN_DATA) {
-					if (typeof this.onData === 'function') {
-						this.onData({uuid:incomingMessage.uuid, buffer:incomingMessage.payload});
-					}
+					this.emit('data', {uuid:incomingMessage.uuid, buffer:incomingMessage.payload});
 				}
 			}
 		}
