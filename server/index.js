@@ -87,7 +87,7 @@ module.exports = class Server extends EventEmitter {
 		});
 		socket.on('close', _ => {
 			this._socketMap.delete(socket);
-			this.emit('closed', socket, error);
+			this.emit('closed', socket);
 		});
 		this._socketMap.set(socket, this._now);
 		this.emit('connected', socket);
