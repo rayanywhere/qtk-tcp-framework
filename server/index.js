@@ -18,7 +18,7 @@ const assert = require('assert');
     onError(socket, err) {
     }
     
-    onMessage(socket, incomingMessage) {
+    onData(socket, {uuid, buffer}) {
     }
 }
 */
@@ -78,8 +78,8 @@ module.exports = class {
 		process.exit(0);
 	}
 
-	send(socket, request) {
-        let outgoingMessage = new Message(Message.SIGN_DATA, request.data, request.uuid);
+	send(socket, {uuid, buffer}) {
+        let outgoingMessage = new Message(Message.SIGN_DATA, buffer, uuid);
 
         try {
 			socket.write(outgoingMessage.toBuffer());
@@ -123,10 +123,10 @@ module.exports = class {
 				socket.buffer = socket.buffer.slice(consumed);
 
 				if (incomingMessage.sign === Message.SIGN_DATA) {
-					if (typeof this.onMessage === 'function') {
-						this.onMessage(socket, {
-                            data: incomingMessage.payload,
-                            uuid: incomingMessage.uuid
+					if (typeof this.onData === 'function') {
+						this.onData(socket, {
+							uuid: incomingMessage.uuid,
+							buffer: incomingMessage.payload							
                         });
 					}
 				}
