@@ -1,9 +1,13 @@
-const EchoServer = require('../examples/echo/server.js');
+const Server = require('../examples/server');
+const fs = require('fs');
+const path = require('path');
 global.assert = require('assert');
 
 before('start server', async () => {
-    global.server = new EchoServer();
-    await server.start();
+    (new Server()).start();
 });
 
-require('./examples');
+let cases = fs.readdirSync(__dirname).filter(file => fs.lstatSync(path.join(__dirname, file)).isDirectory());
+cases.forEach((c) => {
+    require(`${__dirname}/${c}`);
+});

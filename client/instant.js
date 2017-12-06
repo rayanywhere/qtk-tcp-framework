@@ -6,7 +6,6 @@ module.exports = class {
 	constructor(options) {
 		assert(Number.isInteger(options.port), 'options.port is not correctly configured');
         options.host = options.hasOwnProperty('host') ? options.host : options.host = 'localhost';
-        options.timeout = Number.isInteger(options.timeout) ? options.timeout : 3;
 		this._options = options;
 
         this._buffer = Buffer.alloc(0);
@@ -14,7 +13,7 @@ module.exports = class {
 		this._isDataComplete = false;
 	}
 
-    request(payload) {
+    request(payload, timeout = 30000) {
         let outgoingMessage = new Message(Message.SIGN_DATA, payload);
         return new Promise((resolve, reject) => {
             this._callback = {
@@ -22,36 +21,27 @@ module.exports = class {
                 failure: error => reject(error)
             };
 
+            setTimeout(() => {
+                if (!this._isDataComplete) {
+                    this._callback.failure('request timeout');
+                }
+            }, timeout);
+
             this._connect();
-            this._send(outgoingMessage);
+            this._socket.write(outgoingMessage.toBuffer());
         });
     }
 
 	_connect() {
-        this._socket = net.createConnection(this._options.port, this._options.host, () => {
-            console.log('client connected event');
-        });
+        this._socket = net.createConnection(this._options.port, this._options.host);
 
         this._socket.on('data', async (incomingBuffer) => {
-            console.log('client data event');
-
             this._process(incomingBuffer);
         });
 
         this._socket.on('error', (err) => {
-            console.log('client error event');
             this._callback.failure(err);
         });
-    }
-
-    _send(outgoingMessage) {
-        setTimeout(() => {
-            if (!this._isDataComplete) {
-                this._callback.failure('request timeout');
-            }
-        }, this._options.timeout * 1000);
-
-        this._socket.write(outgoingMessage.toBuffer());
     }
 
     _process(incomingBuffer) {

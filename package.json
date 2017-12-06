@@ -1,6 +1,6 @@
 {
   "name": "@qtk/tcp-framework",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "",
   "main": "index.js",
   "directories": {
@@ -27,6 +27,7 @@
   },
   "homepage": "https://github.com/rayanywhere/qtk-tcp-framework#readme",
   "dependencies": {
-    "mocha": "^4.0.1"
+    "mocha": "^4.0.1",
+    "uuid": "^3.1.0"
   }
 }

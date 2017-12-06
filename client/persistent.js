@@ -20,7 +20,6 @@ module.exports = class {
 	constructor(options) {
 		assert(Number.isInteger(options.port), 'options.port is not correctly configured');
         options.host = options.hasOwnProperty('host') ? options.host : options.host = 'localhost';
-        options.timeout = Number.isInteger(options.timeout) ? options.timeout : 30;
 		this._options = options;
 
 		this._pendingMessages = new Map();
@@ -36,13 +35,13 @@ module.exports = class {
 		}, 25 * 1000);
 	}
 
-	async request(payload) {
+	async request(payload, timeout = 30000) {
         let outgoingMessage = new Message(Message.SIGN_DATA, payload);
 
-        return await this._send(outgoingMessage);
+        return await this._send(outgoingMessage, timeout);
     }
 
-	_send(outgoingMessage) {
+	_send(outgoingMessage, timeout) {
         return new Promise((resolve, reject) => {
             this._pendings.set(outgoingMessage.uuid, {
                 success: (response) => resolve(response),
@@ -55,7 +54,7 @@ module.exports = class {
                     this._pendings.delete(outgoingMessage.uuid);
                     callback.failure(new Error('request timeout'));
                 }
-            }, 1000 * this._options.timeout);
+            }, timeout);
 
             if (this._status === STATUS_CONNECTED) {
                 this._socket.write(outgoingMessage.toBuffer());
@@ -69,8 +68,6 @@ module.exports = class {
 	_connect() {
 		this._status = STATUS_CONNECTING;
 		this._socket = net.createConnection(this._options.port, this._options.host, () => {
-            console.log('client connected event');
-
             if (typeof this.onConnected === 'function') {
 				this.onConnected();
 			}
@@ -81,21 +78,15 @@ module.exports = class {
 			this._pendingMessages.clear();
 		});
 		this._socket.on('data', (incomingBuffer) => {
-            console.log('client data event');
-
             this._buffer = Buffer.concat([this._buffer, incomingBuffer]);
 			this._process();
 		});
 		this._socket.on('error', (err) => {
-            console.log('client error event');
-
             if (typeof this.onError === 'function') {
 				this.onError(err);
 			}
 		});
 		this._socket.on('close', (hasError) => {
-            console.log('client close event');
-
             this._close(hasError);
 		});
 	}
