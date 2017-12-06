@@ -13,9 +13,9 @@ module.exports = class {
 		this._isDataComplete = false;
 	}
 
-    request(payload, timeout = 30000) {
-        let outgoingMessage = new Message(Message.SIGN_DATA, payload);
-        return new Promise((resolve, reject) => {
+    request(buffer, timeout = 30000) {
+        let outgoingMessage = new Message(Message.SIGN_DATA, buffer);
+        return new Promise(async (resolve, reject) => {
             this._callback = {
                 success: (response) => resolve(response),
                 failure: error => reject(error)
@@ -27,20 +27,23 @@ module.exports = class {
                 }
             }, timeout);
 
-            this._connect();
+            await this._connect();
             this._socket.write(outgoingMessage.toBuffer());
+            this._socket.on('data', async (incomingBuffer) => {
+                this._process(incomingBuffer);
+            });
+            this._socket.on('error', (err) => {
+                this._callback.failure(err);
+            });
         });
     }
 
 	_connect() {
-        this._socket = net.createConnection(this._options.port, this._options.host);
-
-        this._socket.on('data', async (incomingBuffer) => {
-            this._process(incomingBuffer);
-        });
-
-        this._socket.on('error', (err) => {
-            this._callback.failure(err);
+        return new Promise((resolve, reject) => {
+            this._socket = net.createConnection(this._options.port, this._options.host);
+            this._socket.on('connect', () => {
+                resolve();
+            });
         });
     }
 

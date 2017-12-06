@@ -10,7 +10,9 @@ const STATUS_CONNECTED = 2;
 /*
     onConnected() {}
 
-    onClosed() {}
+	onClosed() {}
+	
+	onData({uuid, buffer}) {}
 
     onError(err) {}
 }
@@ -22,8 +24,7 @@ module.exports = class {
         options.host = options.hasOwnProperty('host') ? options.host : options.host = 'localhost';
 		this._options = options;
 
-		this._pendingMessages = new Map();
-        this._pendings = new Map();
+		this._queuedMessages = [];
         this._status = STATUS_DISCONNECTED;
 		this._buffer = Buffer.alloc(0);
 		this._connect();
@@ -35,34 +36,14 @@ module.exports = class {
 		}, 25 * 1000);
 	}
 
-	async request(payload, timeout = 30000) {
-        let outgoingMessage = new Message(Message.SIGN_DATA, payload);
-
-        return await this._send(outgoingMessage, timeout);
-    }
-
-	_send(outgoingMessage, timeout) {
-        return new Promise((resolve, reject) => {
-            this._pendings.set(outgoingMessage.uuid, {
-                success: (response) => resolve(response),
-                failure: error => reject(error)
-            });
-
-            setTimeout(() => {
-                let callback = this._pendings.get(outgoingMessage.uuid);
-                if (callback !== undefined) {
-                    this._pendings.delete(outgoingMessage.uuid);
-                    callback.failure(new Error('request timeout'));
-                }
-            }, timeout);
-
-            if (this._status === STATUS_CONNECTED) {
-                this._socket.write(outgoingMessage.toBuffer());
-            }
-            else{
-                this._pendingMessages.set(outgoingMessage.uuid, outgoingMessage);
-			}
-        });
+	send({uuid, buffer}) {
+		const outgoingMessage = new Message(Message.SIGN_DATA, buffer, uuid);
+		if (this._status === STATUS_CONNECTED) {
+			this._socket.write(outgoingMessage.toBuffer());
+		}
+		else {
+			this._queuedMessages.push(outgoingMessage);
+		}
 	}
 
 	_connect() {
@@ -72,10 +53,10 @@ module.exports = class {
 				this.onConnected();
 			}
 			this._status = STATUS_CONNECTED;
-			for (let [uuid, outgoingMessage] of this._pendingMessages) {
+			for (let outgoingMessage of this._queuedMessages) {
                 this._socket.write(outgoingMessage.toBuffer());
 			}
-			this._pendingMessages.clear();
+			this._queuedMessages = [];
 		});
 		this._socket.on('data', (incomingBuffer) => {
             this._buffer = Buffer.concat([this._buffer, incomingBuffer]);
@@ -121,11 +102,9 @@ module.exports = class {
 				this._buffer = this._buffer.slice(consumed);
 
 				if (incomingMessage.sign === Message.SIGN_DATA) {
-					let callback = this._pendings.get(incomingMessage.uuid);
-                    if (callback !== undefined) {
-                        this._pendings.delete(incomingMessage.uuid);
-                        callback.success(incomingMessage.payload);
-                    }
+					if (typeof this.onData === 'function') {
+						this.onData({uuid:incomingMessage.uuid, buffer:incomingMessage.payload});
+					}
 				}
 			}
 		}
