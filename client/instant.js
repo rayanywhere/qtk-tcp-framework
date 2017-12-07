@@ -23,7 +23,7 @@ module.exports = class {
 
             setTimeout(() => {
                 if (!this._isDataComplete) {
-                    this._callback.failure('request timeout');
+                    this._callback.failure(new Error('request timeout'));
                 }
             }, timeout);
 
