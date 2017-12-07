@@ -16,7 +16,7 @@ const STATUS_CONNECTED = 2;
 }
 */
 
-module.exports = class Client extends EventEmitter {
+module.exports = class extends EventEmitter {
 	constructor(options) {
 		super();
 		assert(Number.isInteger(options.port), 'options.port is not correctly configured');

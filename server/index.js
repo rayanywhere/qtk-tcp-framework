@@ -13,7 +13,7 @@ const EventEmitter = require('events').EventEmitter;
 }
 */
 
-module.exports = class Server extends EventEmitter {
+module.exports = class extends EventEmitter {
 	constructor(options) {
 		super();
 		assert(Number.isInteger(options.port), 'options.port is not correctly configured');
