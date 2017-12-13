@@ -20,9 +20,7 @@ module.exports = class extends EventEmitter {
 		if (options.host === undefined) {
 			options.host = '0.0.0.0';
 		}
-		if (!Number.isInteger(options.timeout)) {
-			options.timeout = 3;
-		}
+
 		this._options = options;
 		this._socketMap = new Map();
 		this._server = undefined;
@@ -41,12 +39,6 @@ module.exports = class extends EventEmitter {
 				}
 			}
 		}, 1000);
-
-		if (Number.isInteger(this._options.duration)) {
-			setTimeout(() => {
-				this.stop();
-			}, this._options.duration * 1000);
-		}
 
 		this.emit('started');
 	}
