@@ -60,7 +60,7 @@ module.exports = class extends EventEmitter {
 			this._process();
 		});
 		this._socket.on('error', (err) => {
-			this.emit('error', err);
+			this.emit('error', err.stack);
 		});
 		this._socket.on('close', (hasError) => {
             this._close(hasError);
