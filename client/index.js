@@ -12,6 +12,8 @@ const TIMEOUT_INTERVAL = 30;
 
 /*============events & params===========*/
 /*
+	connected => ()
+	closed => ()
 	execption => (error)
 	data => ({uuid, data})
 }
@@ -65,6 +67,7 @@ module.exports = class extends EventEmitter {
                 this._socket.write(outgoingMessage.toBuffer());
 			}
 			this._queuedMessages = [];
+			this.emit('connected');
 		});
 		this._socket.on('data', (incomingBuffer) => {
             this._buffer = Buffer.concat([this._buffer, incomingBuffer]);
@@ -80,8 +83,9 @@ module.exports = class extends EventEmitter {
 	}
 
 	_close() {
-        this._socket.end();
+		this._socket.end();
 		this._status = STATUS_DISCONNECTED;
+		this.emit('closed');
 
 		setTimeout(() => {
 			if (this._status !== STATUS_DISCONNECTED) {
