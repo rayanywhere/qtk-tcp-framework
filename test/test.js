@@ -3,14 +3,14 @@ const fs = require('fs');
 const path = require('path');
 
 const server = new Server({port:8212});
-server.on('data', function (socket, {uuid, buffer}) {
-    switch(buffer.toString('utf8')) {
+server.on('data', function (socket, {uuid, data}) {
+    switch(data.toString('utf8')) {
         case "echo":
-            this.send(socket, {uuid, buffer});
+            this.send(socket, {uuid, data});
             break;
         case "delayed_echo":
             setTimeout(() => {
-                this.send(socket, {uuid, buffer});
+                this.send(socket, {uuid, data});
             }, 3000);
             break;
         default:

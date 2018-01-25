@@ -9,7 +9,7 @@ const TIMEOUT_INTERVAL = 30;
 	connected => (socket)
 	closed => (socket)
 	execption => (socket, err)
-	data => (socket, {uuid, buffer})
+	data => (socket, {uuid, data})
 }
 */
 
@@ -57,8 +57,8 @@ module.exports = class extends EventEmitter {
 		process.exit(0);
 	}
 
-	send(socket, {uuid, buffer}) {
-        let outgoingMessage = new Message(Message.SIGN_DATA, buffer, uuid);
+	send(socket, {uuid, data}) {
+        let outgoingMessage = new Message(Message.SIGN_DATA, data, uuid);
 
         try {
 			socket.write(outgoingMessage.toBuffer());
@@ -96,7 +96,7 @@ module.exports = class extends EventEmitter {
 				socket.buffer = socket.buffer.slice(consumed);
 
 				if (incomingMessage.sign === Message.SIGN_DATA) {
-					this.emit('data', socket, {uuid: incomingMessage.uuid, buffer: incomingMessage.payload});
+					this.emit('data', socket, {uuid: incomingMessage.uuid, data: incomingMessage.payload});
 				}
 			}
 		}

@@ -8,8 +8,8 @@ describe("#tcp-framework", function() {
     it('should return without error after 3 sec', function (done) {
         const timeStart = new Date();      
         const client = new Client({port});
-        client.on('data', ({uuid, buffer}) => {
-            if (buffer.toString('utf8') !== 'delayed_echo') {
+        client.on('data', ({uuid, data}) => {
+            if (data.toString('utf8') !== 'delayed_echo') {
                 done(new Error('response mismatch'));
                 return;
             }
@@ -21,6 +21,6 @@ describe("#tcp-framework", function() {
             }
             done();
         });
-        client.send({uuid:uuid().replace(/-/g, ''), buffer:Buffer.from('delayed_echo')});        
+        client.send({uuid:uuid().replace(/-/g, ''), data:Buffer.from('delayed_echo')});        
     });
 });
