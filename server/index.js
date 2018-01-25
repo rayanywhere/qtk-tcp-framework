@@ -24,7 +24,7 @@ module.exports = class extends EventEmitter {
 		this._options = options;
 		this._socketMap = new Map();
 		this._server = undefined;
-		this._now = new Date().getTime();
+		this._now = 0;
 	}
 
 	start() {

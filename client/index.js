@@ -56,7 +56,7 @@ module.exports = class extends EventEmitter {
 
 	_connect() {
         this._status = STATUS_CONNECTING;
-        this._now = new Date().getTime();
+        this._now = 0;
         this._timeHeartbeat = this._now;
         this._timeLastActive = this._now;
 		this._socket = net.createConnection(this._options.port, this._options.host, () => {
