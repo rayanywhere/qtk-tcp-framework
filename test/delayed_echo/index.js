@@ -4,7 +4,7 @@ const uuid = require('uuid/v4');
 const port = 8212;
 
 describe("#tcp-framework", function() {
-    this.timeout(15000);   
+    this.timeout(10000);   
     it('should return without error after 3 sec', function (done) {
         const timeStart = new Date();      
         const client = new Client({port});

@@ -12,6 +12,7 @@ const TIMEOUT_INTERVAL = 30;
 
 /*============events & params===========*/
 /*
+	execption => (error)
 	data => ({uuid, buffer})
 }
 */
@@ -69,6 +70,9 @@ module.exports = class extends EventEmitter {
             this._buffer = Buffer.concat([this._buffer, incomingBuffer]);
             this._timeLastActive = this._now;
 			this._process();
+		});
+		this._socket.on('error', (err) => {
+			this.emit('exception', err);
 		});
 		this._socket.on('close', () => {
             this._close();
