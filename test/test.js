@@ -1,7 +1,6 @@
 const Server = require('../server');
 const fs = require('fs');
 const path = require('path');
-global.assert = require('assert');
 
 const server = new Server({port:8212});
 server.on('data', function (socket, {uuid, buffer}) {
