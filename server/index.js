@@ -1,14 +1,14 @@
 const Message = require('../message');
 const assert = require('assert');
 const EventEmitter = require('events').EventEmitter;
-
+const TIMEOUT_INTERVAL = 30;
 /*============events & params===========*/
 /*
     started => ()
     stopped => ()
 	connected => (socket)
 	closed => (socket)
-	error => (socket, err)
+	execption => (socket, err)
 	data => (socket, {uuid, buffer})
 }
 */
@@ -32,9 +32,9 @@ module.exports = class extends EventEmitter {
 		this._server.listen(this._options.port, this._options.host);
 
 		this._checkupTimer = setInterval(() => {
-			this._now = new Date().getTime();
+			this._now += 1;
 			for (let [socket, lastActiveTime] of this._socketMap) {
-				if ((lastActiveTime + 30 * 1000) < this._now) {
+				if ((lastActiveTime + TIMEOUT_INTERVAL * 1000) < this._now) {
 					socket.destroy(new Error(`timeout(idle for over 30 seconds`));
 				}
 			}
@@ -75,7 +75,7 @@ module.exports = class extends EventEmitter {
 			this._process(socket);
 		});
 		socket.on('error', error => {
-			this.emit('error', socket, error);
+			this.emit('exception', socket, error);
 		});
 		socket.on('close', _ => {
 			this._socketMap.delete(socket);

@@ -3,11 +3,7 @@ module.exports = class {
 		return require('./server');
 	}
 
-	static get InstantClient() {
-		return require('./client/instant.js');
+	static get Client() {
+		return require('./client');
 	}
-
-    static get PersistentClient() {
-        return require('./client/persistent.js');
-    }
 };

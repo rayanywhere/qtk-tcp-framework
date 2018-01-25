@@ -7,12 +7,12 @@ const STATUS_DISCONNECTED = 0;
 const STATUS_CONNECTING = 1;
 const STATUS_CONNECTED = 2;
 
+const HEART_BEAT_INTERVAL = 20;
+const TIMEOUT_INTERVAL = 30;
+
 /*============events & params===========*/
 /*
-    connected => ()
-    closed => ()
 	data => ({uuid, buffer})
-	error => (err)
 }
 */
 
@@ -23,16 +23,24 @@ module.exports = class extends EventEmitter {
         options.host = options.hasOwnProperty('host') ? options.host : options.host = 'localhost';
 		this._options = options;
 
-		this._queuedMessages = [];
-        this._status = STATUS_DISCONNECTED;
-		this._buffer = Buffer.alloc(0);
+        this._queuedMessages = [];
+        this._buffer = Buffer.alloc(0);
 		this._connect();
 
 		setInterval(() => {
-			if (this._status === STATUS_CONNECTED) {
-				this._socket.write(new Message(Message.SIGN_PING).toBuffer());
+            this._now += 1;
+            if ((this._timeHeartbeat + HEART_BEAT_INTERVAL) <= this._now) {
+                if (this._status === STATUS_CONNECTED) {
+                    this._socket.write(new Message(Message.SIGN_PING).toBuffer());
+                }
+                this._timeHeartbeat = this._now;
+            }
+			if ((this._timeLastActive + TIMEOUT_INTERVAL) <= this._now) {
+                if (this._status !== STATUS_DISCONNECTED) {
+                    this._close();
+                }
 			}
-		}, 25 * 1000);
+		}, 1000);
 	}
 
 	send({uuid, buffer}) {
@@ -46,9 +54,11 @@ module.exports = class extends EventEmitter {
 	}
 
 	_connect() {
-		this._status = STATUS_CONNECTING;
+        this._status = STATUS_CONNECTING;
+        this._now = new Date().getTime();
+        this._timeHeartbeat = this._now;
+        this._timeLastActive = this._now;
 		this._socket = net.createConnection(this._options.port, this._options.host, () => {
-			this.emit('connected');
 			this._status = STATUS_CONNECTED;
 			for (let outgoingMessage of this._queuedMessages) {
                 this._socket.write(outgoingMessage.toBuffer());
@@ -57,25 +67,17 @@ module.exports = class extends EventEmitter {
 		});
 		this._socket.on('data', (incomingBuffer) => {
             this._buffer = Buffer.concat([this._buffer, incomingBuffer]);
+            this._timeLastActive = this._now;
 			this._process();
 		});
-		this._socket.on('error', (err) => {
-			this.emit('exception', err);
-		});
-		this._socket.on('close', (hasError) => {
-            this._close(hasError);
+		this._socket.on('close', () => {
+            this._close();
 		});
 	}
 
-	_close(hasError) {
-		if (hasError) {
-			this._socket.destroy();
-		}
-		else {
-			this._socket.end();
-		}
+	_close() {
+        this._socket.end();
 		this._status = STATUS_DISCONNECTED;
-		this.emit('closed');
 
 		setTimeout(() => {
 			if (this._status !== STATUS_DISCONNECTED) {
@@ -86,21 +88,21 @@ module.exports = class extends EventEmitter {
 	}
 
 	_process() {
-		try {
-			while(true) {
-				let {consumed, message:incomingMessage} = Message.parse(this._buffer);
-				if (consumed === 0) {
-					break;
-				}
-				this._buffer = this._buffer.slice(consumed);
+        while(true) {
+            let {consumed, message:incomingMessage} = Message.parse(this._buffer);
+            if (consumed === 0) {
+                break;
+            }
+            this._buffer = this._buffer.slice(consumed);
 
-				if (incomingMessage.sign === Message.SIGN_DATA) {
-					this.emit('data', {uuid:incomingMessage.uuid, buffer:incomingMessage.payload});
-				}
-			}
-		}
-		catch(error) {
-			this._socket.destroy(error);
-		}
+            if (incomingMessage.sign === Message.SIGN_DATA) {
+                try {
+                    this.emit('data', {uuid:incomingMessage.uuid, buffer:incomingMessage.payload});
+                }
+                catch(err) {
+                    continue;
+                }
+            }
+        }
 	}
 };
