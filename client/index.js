@@ -67,7 +67,12 @@ module.exports = class extends EventEmitter {
                 this._socket.write(outgoingMessage.toBuffer());
 			}
 			this._queuedMessages = [];
-			this.emit('connected');
+			try {
+				this.emit('connected');
+			}
+			catch(err) {
+				this.emit('exception', err);
+			}
 		});
 		this._socket.on('data', (incomingBuffer) => {
             this._buffer = Buffer.concat([this._buffer, incomingBuffer]);
@@ -85,7 +90,12 @@ module.exports = class extends EventEmitter {
 	_close() {
 		this._socket.end();
 		this._status = STATUS_DISCONNECTED;
-		this.emit('closed');
+		try {
+			this.emit('closed');
+		}
+		catch(err) {
+			this.emit('exception', err);
+		}
 
 		setTimeout(() => {
 			if (this._status !== STATUS_DISCONNECTED) {
@@ -108,6 +118,7 @@ module.exports = class extends EventEmitter {
                     this.emit('data', {uuid:incomingMessage.uuid, data:incomingMessage.payload});
                 }
                 catch(err) {
+					this.emit('exception', err);
                     continue;
                 }
             }

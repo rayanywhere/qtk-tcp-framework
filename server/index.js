@@ -74,15 +74,25 @@ module.exports = class extends EventEmitter {
 			socket.buffer = Buffer.concat([socket.buffer, incomingBuffer]);
 			this._process(socket);
 		});
-		socket.on('error', error => {
-			this.emit('exception', socket, error);
+		socket.on('error', err => {
+			this.emit('exception', socket, err);
 		});
 		socket.on('close', _ => {
 			this._socketMap.delete(socket);
-			this.emit('closed', socket);
+			try {
+				this.emit('closed', socket);
+			}
+			catch(err) {
+				this.emit('exception', socket, err);
+			}
 		});
 		this._socketMap.set(socket, this._now);
-		this.emit('connected', socket);
+		try {
+			this.emit('connected', socket);
+		}
+		catch(err) {
+			this.emit('exception', socket, err);
+		}
 	}
 
 	_process(socket) {
@@ -100,8 +110,9 @@ module.exports = class extends EventEmitter {
 				}
 			}
 		}
-		catch(error) {
-			socket.destroy(error);
+		catch(err) {
+			socket.destroy(err);
+			this.emit('exception', socket, err);
 		}
 	}
 }
