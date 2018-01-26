@@ -4,11 +4,11 @@ const EventEmitter = require('events').EventEmitter;
 const TIMEOUT_INTERVAL = 30;
 /*============events & params===========*/
 /*
-    started => ()
-    stopped => ()
+	started => ()
+	stopped => ()
 	connected => (socket)
 	closed => (socket)
-	execption => (socket, err)
+	exception => (socket, err)
 	data => (socket, {uuid, data})
 }
 */
