@@ -25,7 +25,7 @@ module.exports = class extends EventEmitter {
 		assert(Number.isInteger(options.port), 'options.port is not correctly configured');
         options.host = options.hasOwnProperty('host') ? options.host : options.host = 'localhost';
 		this._options = options;
-
+		this._userTerminated = false;
         this._queuedMessages = [];
         this._buffer = Buffer.alloc(0);
 		this._connect();
@@ -54,6 +54,11 @@ module.exports = class extends EventEmitter {
 		else {
 			this._queuedMessages.push(outgoingMessage);
 		}
+	}
+
+	close() {
+		this._userTerminated = true;
+		this._close();
 	}
 
 	_connect() {
@@ -97,12 +102,14 @@ module.exports = class extends EventEmitter {
 			this.emit('exception', err);
 		}
 
-		setTimeout(() => {
-			if (this._status !== STATUS_DISCONNECTED) {
-				return;
-			}
-			this._connect();
-		}, 200);
+		if (!this._userTerminated) {
+			setTimeout(() => {
+				if (this._status !== STATUS_DISCONNECTED) {
+					return;
+				}
+				this._connect();
+			}, 200);
+		}
 	}
 
 	_process() {
