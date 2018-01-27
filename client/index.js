@@ -57,6 +57,8 @@ module.exports = class extends EventEmitter {
 	}
 
 	close() {
+		this._buffer = undefined;
+		this._queuedMessages = undefined;
 		this._userTerminated = true;
 		this._close();
 	}
