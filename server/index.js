@@ -104,8 +104,12 @@ module.exports = class extends EventEmitter {
 					break;
 				}
 				socket.buffer = socket.buffer.slice(consumed);
-
-				if (incomingMessage.sign === Message.SIGN_DATA) {
+				
+				if (incomingMessage.sign === Message.SIGN_PING) {
+					const outgoingMessage = incomingMessage;
+					socket.write(outgoingMessage.toBuffer());
+				}
+				else if (incomingMessage.sign === Message.SIGN_DATA) {
 					this.emit('data', socket, {uuid: incomingMessage.uuid, data: incomingMessage.payload});
 				}
 			}
