@@ -34,7 +34,7 @@ module.exports = class extends EventEmitter {
 		this._checkupTimer = setInterval(() => {
 			this._now += 1;
 			for (let [socket, lastActiveTime] of this._socketMap) {
-				if ((lastActiveTime + TIMEOUT_INTERVAL * 1000) < this._now) {
+				if ((lastActiveTime + TIMEOUT_INTERVAL) < this._now) {
 					socket.destroy(new Error(`timeout(idle for over 30 seconds`));
 				}
 			}
